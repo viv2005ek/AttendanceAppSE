@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { getSessionBySessionId, markAttendance } from '../../services/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
-import { calculateOverlapPercentage, isValidCoordinate } from '../../utils/location';
-import { OVERLAP_THRESHOLDS, CORRECTNESS_RANGE } from '../../utils/constants';
+import { calculateOverlapPercentage, isValidCoordinate } from '../../utils/geolocation';
+import { determineAttendanceStatus, isStudentInList } from '../../utils/attendanceStatus';
+import { CORRECTNESS_RANGE } from '../../utils/constants';
 import { Session } from '../../types';
 import { CheckCircle, Hash, MapPin, Clock, AlertCircle, Loader } from 'lucide-react';
 
@@ -83,23 +84,14 @@ export const MarkAttendance: React.FC = () => {
 
       console.log('Calculated overlap percentage:', overlapPercentage);
 
-      // Determine status based on overlap percentage
-      let status: 'present' | 'check' | 'proxy' | 'not_in_list' = 'proxy';
-      
-      if (overlapPercentage >= OVERLAP_THRESHOLDS.PRESENT) {
-        status = 'present';
-      } else if (overlapPercentage >= OVERLAP_THRESHOLDS.CHECK_MIN) {
-        status = 'check';
-      }
-
       // Check if student is in the session's student list
-      const studentInList = session.studentList.some(
-        student => student.registrationNumber === user.registrationNumber
+      const studentInList = isStudentInList(
+        user.registrationNumber,
+        session.studentList
       );
 
-      if (!studentInList) {
-        status = 'not_in_list';
-      }
+      // Determine status based on overlap percentage and student list
+      const status = determineAttendanceStatus(overlapPercentage, studentInList);
 
       // Prepare attendance data with validated coordinates
       const attendanceData = {

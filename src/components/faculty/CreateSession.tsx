@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { createSession } from '../../services/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
-import { generateSessionId } from '../../utils/location';
+import { generateSessionId } from '../../utils/geolocation';
 import { ROOM_SIZES, CORRECTNESS_RANGE, ACTIVE_DURATIONS } from '../../utils/constants';
 import { StudentData, Session } from '../../types';
 import { importStudentsFromExcel, downloadSampleTemplate } from '../../utils/excel';
