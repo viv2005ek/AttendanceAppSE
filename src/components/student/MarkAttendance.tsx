@@ -1,9 +1,9 @@
-// Student attendance marking component
+// Student attendance marking component - UPDATED
 import React, { useState } from 'react';
 import { getSessionBySessionId, markAttendance } from '../../services/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
-import { calculateOverlapPercentage } from '../../utils/location';
+import { calculateOverlapPercentage, isValidCoordinate } from '../../utils/location';
 import { OVERLAP_THRESHOLDS, CORRECTNESS_RANGE } from '../../utils/constants';
 import { Session } from '../../types';
 import { CheckCircle, Hash, MapPin, Clock, AlertCircle, Loader } from 'lucide-react';
@@ -54,8 +54,13 @@ export const MarkAttendance: React.FC = () => {
   };
 
   const handleMarkAttendance = async () => {
-    if (!session || !location || !user) {
-      setError('Missing required information');
+    if (!session || !user) {
+      setError('Missing session or user information');
+      return;
+    }
+
+    if (!location || !isValidCoordinate(location)) {
+      setError('Valid location is required. Please ensure location services are enabled.');
       return;
     }
 
@@ -63,6 +68,10 @@ export const MarkAttendance: React.FC = () => {
     setError('');
 
     try {
+      console.log('Student location:', location);
+      console.log('Faculty location:', session.coordinates);
+      console.log('Faculty radius:', session.radius);
+
       // Calculate overlap percentage
       const studentRadius = CORRECTNESS_RANGE;
       const overlapPercentage = calculateOverlapPercentage(
@@ -71,6 +80,8 @@ export const MarkAttendance: React.FC = () => {
         session.radius,
         studentRadius
       );
+
+      console.log('Calculated overlap percentage:', overlapPercentage);
 
       // Determine status based on overlap percentage
       let status: 'present' | 'check' | 'proxy' | 'not_in_list' = 'proxy';
@@ -90,24 +101,31 @@ export const MarkAttendance: React.FC = () => {
         status = 'not_in_list';
       }
 
+      // Prepare attendance data with validated coordinates
       const attendanceData = {
         sessionId: session.sessionId,
         studentId: user.uid,
         studentName: user.name,
         registrationNumber: user.registrationNumber,
-        studentCoords: location,
-        overlapPercentage,
+        studentCoords: {
+          latitude: Number(location.latitude),
+          longitude: Number(location.longitude)
+        },
+        overlapPercentage: overlapPercentage,
         status,
         facultyOverride: false,
         finalStatus: status,
       };
 
+      console.log('Submitting attendance data:', attendanceData);
+
       await markAttendance(attendanceData);
       
-      setSuccess(`Attendance marked successfully! Status: ${status.replace('_', ' ')}`);
+      setSuccess(`Attendance marked successfully! Status: ${status.replace(/_/g, ' ')}`);
       setSession(null);
       setSessionId('');
     } catch (err: any) {
+      console.error('Error marking attendance:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -158,7 +176,12 @@ export const MarkAttendance: React.FC = () => {
             ) : locationError ? (
               <p className="text-sm text-red-600 mt-2">{locationError}</p>
             ) : location ? (
-              <p className="text-sm text-green-600 mt-2">Location acquired successfully</p>
+              <div className="text-sm text-green-600 mt-2">
+                <p>✓ Location acquired successfully</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  Coordinates: {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                </p>
+              </div>
             ) : null}
           </div>
 
@@ -213,6 +236,10 @@ export const MarkAttendance: React.FC = () => {
                     {session.expiresAt.toLocaleTimeString()}
                   </p>
                 </div>
+                <div className="col-span-2">
+                  <span className="text-blue-700 font-medium">Location Range:</span>
+                  <p className="text-blue-800">{session.radius} meters radius</p>
+                </div>
               </div>
             </div>
           )}
@@ -238,7 +265,7 @@ export const MarkAttendance: React.FC = () => {
 
           {!location && (
             <p className="text-sm text-gray-600 text-center">
-              Location access is required to mark attendance
+              Location access is required to mark attendance. Please allow location permissions and try again.
             </p>
           )}
         </div>

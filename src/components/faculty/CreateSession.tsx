@@ -1,4 +1,4 @@
-// Faculty session creation component
+// components/CreateSession.tsx
 import React, { useState } from 'react';
 import { createSession } from '../../services/firestore';
 import { useAuth } from '../../hooks/useAuth';
@@ -6,12 +6,12 @@ import { useLocation } from '../../hooks/useLocation';
 import { generateSessionId } from '../../utils/location';
 import { ROOM_SIZES, CORRECTNESS_RANGE, ACTIVE_DURATIONS } from '../../utils/constants';
 import { StudentData, Session } from '../../types';
-import { importStudentsFromExcel } from '../../utils/excel';
-import { Plus, MapPin, Clock, Users, Upload, AlertCircle, CheckCircle } from 'lucide-react';
+import { importStudentsFromExcel, downloadSampleTemplate } from '../../utils/excel';
+import { Plus, MapPin, Clock, Users, Upload, Download, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 
 export const CreateSession: React.FC = () => {
   const { user } = useAuth();
-  const { location, error: locationError, loading: locationLoading } = useLocation();
+  const { location, error: locationError, loading: locationLoading, refetchLocation } = useLocation();
   
   const [formData, setFormData] = useState({
     roomSize: 'mid' as 'small' | 'mid' | 'large',
@@ -38,6 +38,11 @@ export const CreateSession: React.FC = () => {
   };
 
   const handleCreateSession = async () => {
+    if (!user) {
+      setError('User not authenticated');
+      return;
+    }
+
     if (!location) {
       setError('Location is required to create a session');
       return;
@@ -58,8 +63,8 @@ export const CreateSession: React.FC = () => {
 
       const sessionData: Omit<Session, 'id'> = {
         sessionId,
-        facultyId: user!.uid,
-        facultyName: user!.name,
+        facultyId: user.uid,
+        facultyName: user.name,
         coordinates: location,
         radius,
         roomSize: formData.roomSize,
@@ -109,18 +114,31 @@ export const CreateSession: React.FC = () => {
         <div className="space-y-6">
           {/* Location Status */}
           <div className="bg-gray-50 p-4 rounded-md">
-            <div className="flex items-center space-x-2 mb-2">
-              <MapPin className="h-5 w-5 text-blue-600" />
-              <h3 className="font-medium text-gray-900">Location Status</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <MapPin className="h-5 w-5 text-blue-600" />
+                <h3 className="font-medium text-gray-900">Location Status</h3>
+              </div>
+              {!location && !locationLoading && (
+                <button
+                  onClick={refetchLocation}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Retry
+                </button>
+              )}
             </div>
             {locationLoading ? (
-              <p className="text-sm text-gray-600">Getting your location...</p>
+              <p className="text-sm text-gray-600 mt-2">Getting your location...</p>
             ) : locationError ? (
-              <p className="text-sm text-red-600">{locationError}</p>
+              <p className="text-sm text-red-600 mt-2">{locationError}</p>
             ) : location ? (
-              <p className="text-sm text-green-600">
-                Location acquired: {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
-              </p>
+              <div className="text-sm text-green-600 mt-2">
+                <p>✓ Location acquired successfully</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  Coordinates: {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                </p>
+              </div>
             ) : null}
           </div>
 
@@ -129,6 +147,18 @@ export const CreateSession: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Import Student List
             </label>
+            
+            <div className="mb-3">
+              <button
+                type="button"
+                onClick={downloadSampleTemplate}
+                className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center space-x-1"
+              >
+                <Download className="h-4 w-4" />
+                <span>Download sample template</span>
+              </button>
+            </div>
+
             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-blue-400 transition-colors">
               <div className="space-y-1 text-center">
                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
@@ -168,12 +198,12 @@ export const CreateSession: React.FC = () => {
             </label>
             <select
               value={formData.roomSize}
-              onChange={(e) => setFormData({ ...formData, roomSize: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, roomSize: e.target.value as 'small' | 'mid' | 'large' })}
               className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="small">Small (5m radius)</option>
-              <option value="mid">Medium (10m radius)</option>
-              <option value="large">Large (15m radius)</option>
+              <option value="small">Small (5m radius + {CORRECTNESS_RANGE}m buffer)</option>
+              <option value="mid">Medium (10m radius + {CORRECTNESS_RANGE}m buffer)</option>
+              <option value="large">Large (15m radius + {CORRECTNESS_RANGE}m buffer)</option>
             </select>
           </div>
 
@@ -202,7 +232,7 @@ export const CreateSession: React.FC = () => {
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <Loader className="h-4 w-4 animate-spin" />
                 <span>Creating Session...</span>
               </>
             ) : (

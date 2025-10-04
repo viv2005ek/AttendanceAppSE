@@ -1,4 +1,4 @@
-// TypeScript type definitions
+// types/index.ts
 export interface User {
   uid: string;
   email: string;
@@ -54,3 +54,24 @@ export interface RoomSizeConfig {
   mid: number;
   large: number;
 }
+
+// Constants
+export const ROOM_SIZES: RoomSizeConfig = {
+  small: 5,
+  mid: 10,
+  large: 15
+};
+
+export const STATUS_COLORS = {
+  present: '#10B981', // Green
+  check: '#F59E0B',   // Yellow
+  proxy: '#EF4444',   // Red
+  not_in_list: '#DC2626' // Dark Red
+};
+
+export const ATTENDANCE_STATUS_LABELS = {
+  present: 'Present',
+  check: 'Please Check',
+  proxy: 'Proxy',
+  not_in_list: 'Not in List'
+};
