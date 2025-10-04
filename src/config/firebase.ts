@@ -4,15 +4,14 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBruyg2ehkiGRtJKQD626DtWojPt3wLAXs",
-  authDomain: "attendance-app-se-1a68b.firebaseapp.com",
-  projectId: "attendance-app-se-1a68b",
-  storageBucket: "attendance-app-se-1a68b.firebasestorage.app",
-  messagingSenderId: "783682970107",
-  appId: "1:783682970107:web:e79bc1cc5e399d8eecab5e",
-  measurementId: "G-FQBTV0VRSR"
+  apiKey: "AIzaSyDGJ3Vnoo6knzrO9YAJyQBh4NRsPmW71oY",
+  authDomain: "attendme-8f8ea.firebaseapp.com",
+  projectId: "attendme-8f8ea",
+  storageBucket: "attendme-8f8ea.firebasestorage.app",
+  messagingSenderId: "429310630347",
+  appId: "1:429310630347:web:9ad498999a97cfe72c3e4e",
+  measurementId: "G-49Z6WDHNRP"
 };
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
