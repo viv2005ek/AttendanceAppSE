@@ -33,7 +33,15 @@ export const calculateDistance = (
 };
 
 /**
- * Calculate overlap percentage between two circles (faculty and student locations)
+ * Calculate overlap percentage between two circles
+ * Faculty circle = roomSize + accuracy
+ * Student circle = 2m + accuracy from device
+ *
+ * @param facultyCoords Faculty location (center of circle1)
+ * @param studentCoords Student location (center of circle2)
+ * @param facultyRadius Faculty circle radius (roomSize + accuracy)
+ * @param studentRadius Student circle radius (accuracy + 2m)
+ * @returns Overlap percentage (0-100)
  */
 export const calculateOverlapPercentage = (
   facultyCoords: Coordinates,
@@ -51,31 +59,39 @@ export const calculateOverlapPercentage = (
     studentCoords
   });
 
-  // Same location or extremely close (within 10cm)
-  if (distance < 0.1) {
-    console.log('→ Exact/Near-exact match: 100%');
+  // If circles don't overlap at all
+  if (distance >= facultyRadius + studentRadius) {
+    console.log('→ No overlap: 0%');
+    return 0;
+  }
+
+  // If student circle is completely inside faculty circle
+  if (distance + studentRadius <= facultyRadius) {
+    console.log('→ Student circle completely inside faculty circle: 100%');
     return 100;
   }
 
-  // Student is inside faculty radius
-  if (distance <= facultyRadius) {
-    const percentage = 100 - ((distance / facultyRadius) * 30);
-    const result = Math.round(Math.max(70, Math.min(100, percentage)));
-    console.log(`→ Inside faculty radius: ${result}%`);
-    return result;
-  }
+  // Calculate actual circle overlap using geometric formula
+  const r1 = facultyRadius;
+  const r2 = studentRadius;
+  const d = distance;
 
-  // Student is outside but within buffer zone
-  if (distance <= facultyRadius + studentRadius) {
-    const outsideBy = distance - facultyRadius;
-    const percentage = 70 - ((outsideBy / studentRadius) * 70);
-    const result = Math.round(Math.max(0, Math.min(70, percentage)));
-    console.log(`→ In buffer zone: ${result}%`);
-    return result;
-  }
+  // Area of circle 2 (student)
+  const area2 = Math.PI * r2 * r2;
 
-  console.log('→ Outside range: 0%');
-  return 0;
+  // Calculate intersection area using formula for two overlapping circles
+  const part1 = r2 * r2 * Math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2));
+  const part2 = r1 * r1 * Math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1));
+  const part3 = 0.5 * Math.sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2));
+
+  const intersectionArea = part1 + part2 - part3;
+
+  // Overlap percentage = (intersection area / student circle area) * 100
+  const overlapPercentage = (intersectionArea / area2) * 100;
+  const result = Math.round(Math.max(0, Math.min(100, overlapPercentage)));
+
+  console.log(`→ Geometric overlap: ${result}%`);
+  return result;
 };
 
 /**

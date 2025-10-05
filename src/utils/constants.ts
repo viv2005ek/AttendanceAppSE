@@ -5,7 +5,8 @@ export const ROOM_SIZES: { [key: string]: number } = {
   large: 15,
 };
 
-export const CORRECTNESS_RANGE = 5; // Additional buffer in meters
+export const CORRECTNESS_RANGE = 5; // Additional buffer in meters (deprecated - use accuracy from device)
+export const STUDENT_BASE_RADIUS = 2; // Base student radius in meters (+ device accuracy)
 
 export const ACTIVE_DURATIONS = [5, 10, 15]; // Minutes
 

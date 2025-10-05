@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { calculateOverlapPercentage, isValidCoordinate } from '../../utils/geolocation';
 import { determineAttendanceStatus, isStudentInList } from '../../utils/attendanceStatus';
-import { CORRECTNESS_RANGE } from '../../utils/constants';
+import { STUDENT_BASE_RADIUS } from '../../utils/constants';
 import { Session } from '../../types';
 import { CheckCircle, Hash, MapPin, Clock, AlertCircle, Loader } from 'lucide-react';
 
@@ -74,7 +74,11 @@ export const MarkAttendance: React.FC = () => {
       console.log('Faculty radius:', session.radius);
 
       // Calculate overlap percentage
-      const studentRadius = CORRECTNESS_RANGE;
+      // Student radius = base 2m + device accuracy (default to 5m if not available)
+      const deviceAccuracy = location.accuracy || 5;
+      const studentRadius = STUDENT_BASE_RADIUS + deviceAccuracy;
+
+      console.log(`Device accuracy: ${deviceAccuracy}m, Student radius: ${studentRadius}m`);
       const overlapPercentage = calculateOverlapPercentage(
         session.coordinates,
         location,
@@ -125,11 +129,11 @@ export const MarkAttendance: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
         <div className="flex items-center space-x-3 mb-6">
           <CheckCircle className="h-6 w-6 text-green-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Mark Attendance</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Mark Attendance</h2>
         </div>
 
         {error && (
@@ -182,7 +186,7 @@ export const MarkAttendance: React.FC = () => {
             <label htmlFor="sessionId" className="block text-sm font-medium text-gray-700 mb-2">
               Session ID
             </label>
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
                 <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
@@ -198,9 +202,16 @@ export const MarkAttendance: React.FC = () => {
               <button
                 onClick={handleSessionLookup}
                 disabled={loading || sessionId.length !== 6}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
               >
-                {loading ? <Loader className="h-4 w-4 animate-spin" /> : 'Find Session'}
+                {loading ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin" />
+                    <span>Finding...</span>
+                  </>
+                ) : (
+                  <span>Find Session</span>
+                )}
               </button>
             </div>
           </div>
@@ -209,7 +220,7 @@ export const MarkAttendance: React.FC = () => {
           {session && (
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <h3 className="font-medium text-blue-900 mb-3">Session Found</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-blue-700 font-medium">Faculty:</span>
                   <p className="text-blue-800">{session.facultyName}</p>
@@ -228,7 +239,7 @@ export const MarkAttendance: React.FC = () => {
                     {session.expiresAt.toLocaleTimeString()}
                   </p>
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <span className="text-blue-700 font-medium">Location Range:</span>
                   <p className="text-blue-800">{session.radius} meters radius</p>
                 </div>
