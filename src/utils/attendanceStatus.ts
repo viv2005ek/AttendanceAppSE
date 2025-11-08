@@ -35,7 +35,9 @@ export const isStudentInList = (
   studentRegNumber: string,
   studentList: Array<{ registrationNumber: string }>
 ): boolean => {
+  if (!studentRegNumber || !studentList) return false;
+  
   return studentList.some(
-    student => student.registrationNumber === studentRegNumber
+    student => student.registrationNumber.toLowerCase() === studentRegNumber.toLowerCase()
   );
 };
