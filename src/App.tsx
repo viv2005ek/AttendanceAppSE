@@ -7,6 +7,7 @@ import { SignUp } from './components/auth/SignUp';
 import { CreateSession } from './components/faculty/CreateSession';
 import { FacultyDashboard } from './components/faculty/FacultyDashboard';
 import { MarkAttendance } from './components/student/MarkAttendance';
+import { Loader, Shield, Users, BookOpen, Smartphone } from 'lucide-react';
 
 function App() {
   const { user, loading } = useAuth();
@@ -14,8 +15,16 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 flex items-center justify-center">
+        <div className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
+              <Loader className="h-8 w-8 text-white animate-spin" />
+            </div>
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Loading Smart Attendance</h2>
+          <p className="text-blue-100 text-sm">Preparing your experience...</p>
+        </div>
       </div>
     );
   }

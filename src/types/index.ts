@@ -28,6 +28,8 @@ export interface Session {
   expiresAt: Date;
   status: 'active' | 'expired';
   studentList: StudentData[];
+    locationAccuracy?: number; // Add this field
+
 }
 
 export interface StudentData {
